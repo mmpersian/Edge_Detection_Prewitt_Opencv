@@ -8,13 +8,22 @@
 
 #include <iostream>
 
-int xGradient(cv::Mat image, int x, int y)
+int xSobelGradient(cv::Mat image, int x, int y)
 {
     return image.at<uchar>(y - 1, x - 1) +
-        2 * image.at<uchar>(y, x - 1) +
+        2* image.at<uchar>(y, x - 1) +
         image.at<uchar>(y + 1, x - 1) -
         image.at<uchar>(y - 1, x + 1) -
-        2 * image.at<uchar>(y, x + 1) -
+        2* image.at<uchar>(y, x + 1) -
+        image.at<uchar>(y + 1, x + 1);
+}
+int xPrewittGradient(cv::Mat image, int x, int y)
+{
+    return image.at<uchar>(y - 1, x - 1) +
+         image.at<uchar>(y, x - 1) +
+        image.at<uchar>(y + 1, x - 1) -
+        image.at<uchar>(y - 1, x + 1) -
+        image.at<uchar>(y, x + 1) -
         image.at<uchar>(y + 1, x + 1);
 }
 
@@ -22,25 +31,36 @@ int xGradient(cv::Mat image, int x, int y)
 // at a given point in a image
 // returns gradient in the y direction
 
-int yGradient(cv::Mat image, int x, int y)
+int ySobelGradient(cv::Mat image, int x, int y)
 {
     return image.at<uchar>(y - 1, x - 1) +
-        2 * image.at<uchar>(y - 1, x) +
+        2* image.at<uchar>(y - 1, x) +
         image.at<uchar>(y - 1, x + 1) -
         image.at<uchar>(y + 1, x - 1) -
-        2 * image.at<uchar>(y + 1, x) -
+        2* image.at<uchar>(y + 1, x) -
+        image.at<uchar>(y + 1, x + 1);
+}
+
+int yPrewittGradient(cv::Mat image, int x, int y)
+{
+    return image.at<uchar>(y - 1, x - 1) +
+         image.at<uchar>(y - 1, x) +
+        image.at<uchar>(y - 1, x + 1) -
+        image.at<uchar>(y + 1, x - 1) -
+        image.at<uchar>(y + 1, x) -
         image.at<uchar>(y + 1, x + 1);
 }
 
 int main()
 {
     std::cout << "Hello World!\n";
-    cv::Mat src, dst;
-    int gx, gy, sum;
+    cv::Mat src, dstSobel,dstPrewitt;
+    int gsx, gsy,gpx,gpy ,sums,sump;
 
     // Load an image
-    src = cv::imread("lena512color.tiff", CV_LOAD_IMAGE_GRAYSCALE);
-    dst = src.clone();
+    src = cv::imread("C:\\Users\\Mehdi\\Source\\repos\\Edge_Detection_Prewitt_Opencv\\x64\\Debug\\StivJobs1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    dstSobel = src.clone();
+    dstPrewitt = src.clone();
     if (!src.data)
     {
         return -1;
@@ -48,23 +68,37 @@ int main()
 
 
     for (int y = 0; y < src.rows; y++)
-        for (int x = 0; x < src.cols; x++)
-            dst.at<uchar>(y, x) = 0.0;
-
+        for (int x = 0; x < src.cols; x++) {
+            dstSobel.at<uchar>(y, x) = 0.0;
+            dstPrewitt.at<uchar>(y, x) = 0.0;
+        }
     for (int y = 1; y < src.rows - 1; y++) {
         for (int x = 1; x < src.cols - 1; x++) {
-            gx = xGradient(src, x, y);
-            gy = yGradient(src, x, y);
-            sum = abs(gx) + abs(gy);
-            sum = sum > 255 ? 255 : sum;
-            sum = sum < 0 ? 0 : sum;
-            dst.at<uchar>(y, x) = sum;
+        	//Sobel 
+            gsx = xSobelGradient(src, x, y);
+            gsy = ySobelGradient(src, x, y);
+            sums = sqrt(powf(gsx,2.0) + powf(gsy,2.0));
+            sums = sums > 255 ? 255 : sums;
+            sums = sums < 0 ? 0 : sums;
+            dstSobel.at<uchar>(y, x) = sums;
+        	
+            //Prewitt
+            gpx = xPrewittGradient(src, x, y);
+            gpy = yPrewittGradient(src, x, y);
+            sump = sqrt(powf(gpx, 2.0) + powf(gpy, 2.0));
+            sump = sump > 255 ? 255 : sump;
+            sump = sump < 0 ? 0 : sump;
+            dstPrewitt.at<uchar>(y, x) = sump;
+        	
         }
     }
 
-    cv::namedWindow("final");
-    cv::imshow("final", dst);
+    cv::namedWindow("Sobel Filter");
+    cv::imshow("Sobel Filter", dstSobel);
 
+    cv::namedWindow("Prewitt Filter");
+    cv::imshow("Prewitt Filter", dstPrewitt);
+	
     cv::namedWindow("initial");
     cv::imshow("initial", src);
 
